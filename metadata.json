@@ -1,0 +1,6 @@
+{
+  "name": "SantéNova v2.1 — Challenge Edition",
+  "description": "Plateforme éthique d'orchestration IA en santé : RAG médical sécurisé, navigation des soins, human-in-the-loop et accessibilité multilingue.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
