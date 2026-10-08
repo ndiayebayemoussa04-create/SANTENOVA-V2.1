@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import {
   QrCode,
   Smartphone,
@@ -28,14 +29,31 @@ export const PatientQRCodeModal: React.FC<PatientQRCodeModalProps> = ({
   onLaunchPatientApp,
 }) => {
   const [copied, setCopied] = useState(false);
-
-  if (!isOpen) return null;
+  const [qrSrc, setQrSrc] = useState<string>(PATIENT_APP_QR_DATA_URL);
 
   // Use current window origin if available, fallback to public demo URL
   const currentDemoUrl =
     typeof window !== 'undefined'
       ? `${window.location.origin}/?tab=patient-app`
       : PATIENT_APP_DEMO_URL;
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      QRCode.toDataURL(currentDemoUrl, {
+        width: 450,
+        margin: 2,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff',
+        },
+        errorCorrectionLevel: 'H',
+      })
+        .then((url) => setQrSrc(url))
+        .catch(() => setQrSrc(PATIENT_APP_QR_DATA_URL));
+    }
+  }, [currentDemoUrl]);
+
+  if (!isOpen) return null;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(currentDemoUrl);
@@ -191,7 +209,7 @@ export const PatientQRCodeModal: React.FC<PatientQRCodeModalProps> = ({
           {/* QR Code Presentation Box */}
           <div className="relative inline-block mx-auto p-4 bg-white rounded-2xl shadow-xl ring-4 ring-teal-500/30 group">
             <img
-              src={PATIENT_APP_QR_DATA_URL}
+              src={qrSrc}
               alt="QR Code Application Patiente SantéNova"
               className="w-56 h-56 sm:w-64 sm:h-64 object-contain mx-auto block"
             />
