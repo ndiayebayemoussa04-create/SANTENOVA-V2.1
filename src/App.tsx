@@ -11,6 +11,7 @@ import { MultilingualView } from './components/MultilingualView';
 import { PublicHealthView } from './components/PublicHealthView';
 import { CancerPreventionView } from './components/CancerPreventionView';
 import { PatientPortalApp } from './components/PatientPortalApp';
+import { PatientQRCodeModal } from './components/PatientQRCodeModal';
 import { UserAccountsView } from './components/UserAccountsView';
 import { FieldOperationsView } from './components/FieldOperationsView';
 import { InstitutionalDossierView } from './components/InstitutionalDossierView';
@@ -22,9 +23,28 @@ import { ShieldAlert, Info } from 'lucide-react';
 
 export default function App() {
   const orchestrator = AIOrchestrator.getInstance();
-  const [currentTab, setCurrentTab] = useState<string>('challenge');
+  const [currentTab, setCurrentTab] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) return tabParam;
+      const hash = window.location.hash.replace('#', '');
+      if (hash) return hash;
+    }
+    return 'challenge';
+  });
+  const [isQRModalOpen, setIsQRModalOpen] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<UserRole>('jury');
   const [lang, setLang] = useState<Language>(I18nService.language);
+
+  const handleTabChange = (tab: string) => {
+    setCurrentTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
 
   useEffect(() => {
     const unsub = I18nService.subscribe((l) => setLang(l));
@@ -40,37 +60,45 @@ export default function App() {
       {/* Top Bar Contract (1 Row, 3 Zones) */}
       <Navigation
         currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
+        setCurrentTab={handleTabChange}
         userRole={userRole}
         setUserRole={setUserRole}
         pendingReviewCount={pendingReviews}
+        onOpenQRModal={() => setIsQRModalOpen(true)}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 pb-16">
-        {currentTab === 'challenge' && <ChallengeView onNavigateToTab={setCurrentTab} />}
+        {currentTab === 'challenge' && <ChallengeView onNavigateToTab={handleTabChange} />}
         {currentTab === 'pathway' && <PatientPathwayView />}
         {currentTab === 'rag' && <DocumentRAGView />}
-        {currentTab === 'cancer' && <CancerPreventionView onNavigateToReviews={() => setCurrentTab('reviews')} />}
+        {currentTab === 'cancer' && <CancerPreventionView onNavigateToReviews={() => handleTabChange('reviews')} />}
         {currentTab === 'patient-app' && (
           <PatientPortalApp
-            onOpenCancerScreening={() => setCurrentTab('cancer')}
-            onOpenDocuments={() => setCurrentTab('rag')}
+            onOpenCancerScreening={() => handleTabChange('cancer')}
+            onOpenDocuments={() => handleTabChange('rag')}
           />
         )}
         {currentTab === 'accounts' && (
-          <UserAccountsView onSessionSwitched={() => setCurrentTab('patient-app')} />
+          <UserAccountsView onSessionSwitched={() => handleTabChange('patient-app')} />
         )}
         {currentTab === 'modules' && <SpecializedModulesView />}
         {currentTab === 'terrain' && <FieldOperationsView />}
         {currentTab === 'dossier' && <InstitutionalDossierView />}
         {currentTab === 'trust' && <TrustCenterView />}
         {currentTab === 'governance' && <GovernanceView />}
-        {currentTab === 'reviews' && <HumanReviewModal onClose={() => setCurrentTab('challenge')} />}
+        {currentTab === 'reviews' && <HumanReviewModal onClose={() => handleTabChange('challenge')} />}
         {currentTab === 'multilingual' && <MultilingualView />}
         {currentTab === 'publichealth' && <PublicHealthView />}
         {currentTab === 'wellbeing' && <PatientPathwayView />}
       </main>
+
+      {/* QR Code Demo Modal */}
+      <PatientQRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        onLaunchPatientApp={() => handleTabChange('patient-app')}
+      />
 
       {/* Ethical Medical Disclaimer Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-6 text-xs text-slate-500">

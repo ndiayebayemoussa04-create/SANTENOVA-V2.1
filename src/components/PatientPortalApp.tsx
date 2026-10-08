@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { AuthService } from '../services/authService';
 import { VoiceAssistantWidget } from './VoiceAssistantWidget';
+import { PatientQRCodeModal } from './PatientQRCodeModal';
 import { mockPatientAwaNdiaye } from '../data/mockPatient';
 import { I18nService } from '../services/i18n';
+import { PATIENT_APP_QR_DATA_URL, PATIENT_APP_DEMO_URL } from '../data/qrCodeData';
 import { Language } from '../types';
 import {
   Heart,
@@ -50,6 +52,7 @@ export const PatientPortalApp: React.FC<PatientPortalAppProps> = ({
 
   // Multi-Device & PWA installation state
   const [showDeviceSetupModal, setShowDeviceSetupModal] = useState<boolean>(false);
+  const [showQRDemoModal, setShowQRDemoModal] = useState<boolean>(false);
   const [deviceTab, setDeviceTab] = useState<'mobile' | 'tablet' | 'desktop' | 'network'>('mobile');
   const [deviceSimMode, setDeviceSimMode] = useState<'full' | 'mobile_sim' | 'tablet_sim'>('full');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -186,6 +189,16 @@ export const PatientPortalApp: React.FC<PatientPortalAppProps> = ({
                 <span className="hidden sm:inline">Smartphone</span>
               </button>
             </div>
+
+            {/* Action: Open QR Code Demo Modal */}
+            <button
+              onClick={() => setShowQRDemoModal(true)}
+              className="px-3.5 py-1.5 bg-gradient-to-r from-teal-500/20 via-emerald-500/15 to-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+              title="Afficher le QR code pour tester sur smartphone"
+            >
+              <QrCode className="w-4 h-4 text-teal-400" />
+              <span>QR Code Démo</span>
+            </button>
 
             {/* Action: Open Guide */}
             <button
@@ -807,6 +820,43 @@ export const PatientPortalApp: React.FC<PatientPortalAppProps> = ({
             {/* Tab 1: Smartphone (Android & iOS) */}
             {deviceTab === 'mobile' && (
               <div className="space-y-4 text-xs">
+                {/* QR Code Quick Scan Box for Mobile */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-teal-950/40 via-slate-900 to-slate-950 border border-teal-500/30 flex flex-col sm:flex-row items-center gap-4">
+                  <div className="p-2 bg-white rounded-xl shrink-0 shadow-md">
+                    <img
+                      src={PATIENT_APP_QR_DATA_URL}
+                      alt="QR Code Mobile"
+                      className="w-24 h-24 sm:w-28 sm:h-28 object-contain block"
+                    />
+                  </div>
+                  <div className="space-y-2 flex-1 text-left">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <strong className="text-white text-sm">QR Code Démo Patient (Scan Immédiat)</strong>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 font-bold">100% FONCTIONNEL</span>
+                    </div>
+                    <p className="text-slate-300 text-xs leading-relaxed">
+                      Pointez l'appareil photo de votre iPhone ou smartphone Android vers ce code pour lancer le portail patient en plein écran.
+                    </p>
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      <button
+                        onClick={() => setShowQRDemoModal(true)}
+                        className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Agrandir le QR Code</span>
+                      </button>
+                      <a
+                        href="/qr_patient_app.png"
+                        download="santenova_qr_code_patient.png"
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5 text-teal-400" />
+                        <span>Télécharger PNG</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Android Instructions */}
                   <div className="p-4 rounded-xl bg-slate-950/80 border border-emerald-500/30 space-y-3">
@@ -993,6 +1043,16 @@ export const PatientPortalApp: React.FC<PatientPortalAppProps> = ({
           </div>
         </div>
       )}
+
+      {/* QR Code Demo Modal */}
+      <PatientQRCodeModal
+        isOpen={showQRDemoModal}
+        onClose={() => setShowQRDemoModal(false)}
+        onLaunchPatientApp={() => {
+          setShowQRDemoModal(false);
+          setDeviceSimMode('mobile_sim');
+        }}
+      />
       </div>
     </div>
   );

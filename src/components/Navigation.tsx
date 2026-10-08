@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Language, UserRole } from '../types';
-import { ShieldCheck, Activity, Globe, FileText } from 'lucide-react';
+import { ShieldCheck, Activity, Globe, FileText, QrCode } from 'lucide-react';
 import { I18nService } from '../services/i18n';
 
 interface NavigationProps {
@@ -9,6 +9,7 @@ interface NavigationProps {
   userRole: UserRole;
   setUserRole: (role: UserRole) => void;
   pendingReviewCount: number;
+  onOpenQRModal?: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -17,6 +18,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   userRole,
   setUserRole,
   pendingReviewCount,
+  onOpenQRModal,
 }) => {
   const [lang, setLang] = useState<Language>(I18nService.language);
 
@@ -160,6 +162,19 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         {/* Zone 3: Actions + Role + Language Switcher */}
         <div className="flex items-center gap-2.5">
+          {/* Quick QR Code Demo Button */}
+          {onOpenQRModal && (
+            <button
+              onClick={onOpenQRModal}
+              className="px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 bg-gradient-to-r from-teal-500/20 via-emerald-500/15 to-teal-500/20 text-teal-300 border border-teal-500/40 hover:border-teal-400 hover:bg-teal-500/30 shadow-sm shadow-teal-500/10"
+              title="Scanner le QR Code pour tester sur Smartphone ou Tablette"
+            >
+              <QrCode className="w-3.5 h-3.5 text-teal-400" />
+              <span className="hidden sm:inline">📱 QR Code Démo</span>
+              <span className="sm:hidden font-mono">QR</span>
+            </button>
+          )}
+
           {/* Official Dossier Partner Button (Word/PDF) */}
           <button
             onClick={() => setCurrentTab('dossier')}
