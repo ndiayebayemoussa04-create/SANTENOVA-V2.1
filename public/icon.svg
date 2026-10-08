@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#134e4a" />
+    </linearGradient>
+    <linearGradient id="crossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+  <circle cx="256" cy="256" r="190" fill="#0f766e" opacity="0.3"/>
+  <!-- Cross / Heart symbol -->
+  <rect x="216" y="116" width="80" height="280" rx="20" fill="url(#crossGrad)"/>
+  <rect x="116" y="216" width="280" height="80" rx="20" fill="url(#crossGrad)"/>
+  <!-- Central pulse dot -->
+  <circle cx="256" cy="256" r="28" fill="#ffffff" />
+</svg>

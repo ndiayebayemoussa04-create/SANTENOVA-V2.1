@@ -21,6 +21,17 @@ import {
   Printer,
   Download,
   ShieldCheck,
+  Smartphone,
+  Tablet,
+  Monitor,
+  Wifi,
+  Share2,
+  ExternalLink,
+  Laptop,
+  Check,
+  Layers,
+  Sparkles,
+  Info,
 } from 'lucide-react';
 
 interface PatientPortalAppProps {
@@ -36,6 +47,40 @@ export const PatientPortalApp: React.FC<PatientPortalAppProps> = ({
   const [medLogs, setMedLogs] = useState([...auth.medicationLogs]);
   const [bpLogs, setBpLogs] = useState([...auth.bloodPressureLogs]);
   const [currentLang, setCurrentLang] = useState<Language>(I18nService.language);
+
+  // Multi-Device & PWA installation state
+  const [showDeviceSetupModal, setShowDeviceSetupModal] = useState<boolean>(false);
+  const [deviceTab, setDeviceTab] = useState<'mobile' | 'tablet' | 'desktop' | 'network'>('mobile');
+  const [deviceSimMode, setDeviceSimMode] = useState<'full' | 'mobile_sim' | 'tablet_sim'>('full');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstallPWA, setCanInstallPWA] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstallPWA(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setCanInstallPWA(false);
+        }
+        setDeferredPrompt(null);
+      } catch (err) {
+        setShowDeviceSetupModal(true);
+      }
+    } else {
+      setShowDeviceSetupModal(true);
+    }
+  };
 
   useEffect(() => {
     const unsub = I18nService.subscribe((l) => setCurrentLang(l));
@@ -75,8 +120,116 @@ export const PatientPortalApp: React.FC<PatientPortalAppProps> = ({
     setTimeout(() => setSyncFeedback(null), 4000);
   };
 
+  const containerClasses =
+    deviceSimMode === 'mobile_sim'
+      ? 'max-w-[420px] mx-auto border-[6px] border-slate-700/80 rounded-[2.5rem] p-4 shadow-2xl bg-slate-950 my-6 transition-all ring-8 ring-slate-900/40'
+      : deviceSimMode === 'tablet_sim'
+      ? 'max-w-[820px] mx-auto border-4 border-slate-700/80 rounded-3xl p-5 shadow-2xl bg-slate-950 my-6 transition-all ring-8 ring-slate-900/40'
+      : 'max-w-5xl mx-auto px-4 sm:px-6 py-6 transition-all';
+
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+    <div className="py-2">
+      {/* Top Banner: Multi-Device & PWA Installer Controls */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-6">
+        <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/50 border border-teal-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg backdrop-blur-sm">
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 shrink-0">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-white uppercase tracking-wider">
+                  Accès Multi-Appareils (PWA)
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  SMARTPHONE · TABLETTE · PC
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Application installable en 1 clic sans passer par un store. Fonctionne 100% hors-ligne sur le Wi-Fi de l'hôpital ou à domicile.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+            {/* Device Simulator Toggle */}
+            <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1 text-xs">
+              <button
+                onClick={() => setDeviceSimMode('full')}
+                className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors ${
+                  deviceSimMode === 'full' ? 'bg-slate-800 text-teal-300 font-bold shadow-sm' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Aperçu écran PC standard"
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">PC / Plein Écran</span>
+              </button>
+              <button
+                onClick={() => setDeviceSimMode('tablet_sim')}
+                className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors ${
+                  deviceSimMode === 'tablet_sim' ? 'bg-slate-800 text-teal-300 font-bold shadow-sm' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Aperçu Tablette (iPad / Android Tab)"
+              >
+                <Tablet className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Tablette</span>
+              </button>
+              <button
+                onClick={() => setDeviceSimMode('mobile_sim')}
+                className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors ${
+                  deviceSimMode === 'mobile_sim' ? 'bg-slate-800 text-teal-300 font-bold shadow-sm' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Aperçu Smartphone (iPhone / Android)"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Smartphone</span>
+              </button>
+            </div>
+
+            {/* Action: Open Guide */}
+            <button
+              onClick={() => setShowDeviceSetupModal(true)}
+              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <Info className="w-4 h-4 text-teal-400" />
+              <span>Guide de Connexion</span>
+            </button>
+
+            {/* Action: Direct PWA Install Button */}
+            <button
+              onClick={handleInstallClick}
+              className="px-3.5 py-1.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-teal-500/20"
+            >
+              <Download className="w-4 h-4" />
+              <span>Installer l'App</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Simulator Device Shell Indicator (if simulated) */}
+      {deviceSimMode === 'mobile_sim' && (
+        <div className="text-center text-[11px] text-teal-400 font-mono mb-2 flex items-center justify-center gap-1.5">
+          <Smartphone className="w-3.5 h-3.5" />
+          <span>Aperçu interactif : Format Smartphone 390px (iPhone & Android)</span>
+        </div>
+      )}
+      {deviceSimMode === 'tablet_sim' && (
+        <div className="text-center text-[11px] text-blue-400 font-mono mb-2 flex items-center justify-center gap-1.5">
+          <Tablet className="w-3.5 h-3.5" />
+          <span>Aperçu interactif : Format Tablette Tactile 820px (Lit d'hôpital & Maternité)</span>
+        </div>
+      )}
+
+      {/* Container adapts width based on device simulation */}
+      <div className={`${containerClasses} space-y-8`}>
+        {/* Device simulated notch for mobile */}
+        {deviceSimMode === 'mobile_sim' && (
+          <div className="w-28 h-3.5 bg-slate-800 rounded-full mx-auto -mt-1 mb-2 flex items-center justify-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700"></div>
+          </div>
+        )}
       {/* Patient Header Welcome Card */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/40 border border-slate-800 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -570,6 +723,277 @@ export const PatientPortalApp: React.FC<PatientPortalAppProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modal: Guide de Paramétrage Multi-Appareils (Smartphone, Tablette, PC, Réseau) */}
+      {showDeviceSetupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-3xl w-full p-6 space-y-6 shadow-2xl my-8">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                  <Smartphone className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-white">
+                      Guide de Paramétrage & Déploiement Multi-Appareils
+                    </h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30 font-bold">
+                      PWA ZERO-STORE
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Comment déployer et faire fonctionner l'application sur Smartphones, Tablettes et Ordinateurs sans passer par les stores d'applications.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDeviceSetupModal(false)}
+                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950/70 p-1.5 rounded-xl border border-slate-800 text-xs font-semibold">
+              <button
+                onClick={() => setDeviceTab('mobile')}
+                className={`py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                  deviceTab === 'mobile'
+                    ? 'bg-teal-500 text-slate-950 shadow-md font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>1. Smartphone</span>
+              </button>
+              <button
+                onClick={() => setDeviceTab('tablet')}
+                className={`py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                  deviceTab === 'tablet'
+                    ? 'bg-teal-500 text-slate-950 shadow-md font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Tablet className="w-4 h-4" />
+                <span>2. Tablette</span>
+              </button>
+              <button
+                onClick={() => setDeviceTab('desktop')}
+                className={`py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                  deviceTab === 'desktop'
+                    ? 'bg-teal-500 text-slate-950 shadow-md font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Monitor className="w-4 h-4" />
+                <span>3. Ordinateur</span>
+              </button>
+              <button
+                onClick={() => setDeviceTab('network')}
+                className={`py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                  deviceTab === 'network'
+                    ? 'bg-teal-500 text-slate-950 shadow-md font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Wifi className="w-4 h-4" />
+                <span>4. Wi-Fi Local</span>
+              </button>
+            </div>
+
+            {/* Tab 1: Smartphone (Android & iOS) */}
+            {deviceTab === 'mobile' && (
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Android Instructions */}
+                  <div className="p-4 rounded-xl bg-slate-950/80 border border-emerald-500/30 space-y-3">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                      <Smartphone className="w-4 h-4" />
+                      <span>Android (Chrome / Samsung / Xiaomi)</span>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-2 text-slate-300">
+                      <li>
+                        <strong>Ouvrir le navigateur Chrome</strong> et taper l'URL de l'hôpital ou scanner le QR code du lit/affiche.
+                      </li>
+                      <li>
+                        Appuyer sur le bandeau vert <em>« Installer l'application »</em> ou ouvrir le menu à 3 points (⋮) en haut à droite.
+                      </li>
+                      <li>
+                        Sélectionner <strong>« Ajouter à l'écran d'accueil »</strong> ou <strong>« Installer SantéNova »</strong>.
+                      </li>
+                      <li>
+                        L'icône SantéNova apparaît parmi les applications du téléphone avec son propre logo.
+                      </li>
+                    </ol>
+                    <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px]">
+                      ✨ <strong>Avantage :</strong> Aucune obligation d'utiliser Google Play Store. Pèse moins de 2 Mo et démarre instantanément en mode hors-ligne.
+                    </div>
+                  </div>
+
+                  {/* iOS / iPhone Instructions */}
+                  <div className="p-4 rounded-xl bg-slate-950/80 border border-indigo-500/30 space-y-3">
+                    <div className="flex items-center gap-2 text-indigo-400 font-bold text-sm">
+                      <Smartphone className="w-4 h-4" />
+                      <span>iPhone & iPad (Apple Safari)</span>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-2 text-slate-300">
+                      <li>
+                        <strong>Ouvrir Safari</strong> sur l'iPhone et accéder au portail SantéNova.
+                      </li>
+                      <li>
+                        Appuyer sur le bouton de partage Apple <Share2 className="w-3.5 h-3.5 inline text-indigo-400" /> (le carré avec une flèche vers le haut, en bas de l'écran).
+                      </li>
+                      <li>
+                        Faire défiler la liste vers le bas et appuyer sur <strong>« Sur l'écran d'accueil »</strong>.
+                      </li>
+                      <li>
+                        Confirmer en appuyant sur <strong>« Ajouter »</strong> en haut à droite.
+                      </li>
+                    </ol>
+                    <div className="p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px]">
+                      ✨ <strong>Rendu Natif :</strong> L'application s'exécute en plein écran autonome (« Standalone »), sans barre d'adresse ni boutons Safari.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="text-white font-bold">Accessibilité Vocale Multilingue</div>
+                    <div className="text-slate-400 text-[11px]">
+                      Pour les patientes ne sachant ni lire ni écrire, l'assistante vocale intégrée s'exprime en Wolof, Français et Anglais.
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded bg-teal-500/10 text-teal-400 font-mono text-[11px] font-bold shrink-0">
+                    WOLOF + FR READY
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: Tablette (Maternité & Chevet) */}
+            {deviceTab === 'tablet' && (
+              <div className="space-y-4 text-xs">
+                <div className="p-4 rounded-xl bg-slate-950/80 border border-blue-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-blue-400 font-bold text-sm">
+                    <Tablet className="w-5 h-5" />
+                    <span>Tablette Tactile de Chevet & Maternité (iPad / Android 10-12")</span>
+                  </div>
+                  <p className="text-slate-300">
+                    Les tablettes sont idéales pour les soignants, sages-femmes et infirmiers en visite de lit à lit dans les services de maternité et médecine interne :
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
+                      <strong className="text-white block">Mode Soignant Nomade</strong>
+                      <p className="text-slate-400 text-[11px]">
+                        Affichage sur 2 colonnes permettant de visualiser simultanément la fiche de suivi CPN et la saisie des constantes vitales (Tension, Pouls, Glycémie).
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
+                      <strong className="text-white block">Mode Borne / Kiosque d'Accueil</strong>
+                      <p className="text-slate-400 text-[11px]">
+                        Possibilité de verrouiller la tablette sur l'application (Mode Accès Guidé iOS ou Épinglage Android) pour que les patientes en salle d'attente remplissent leur auto-évaluation.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300 text-[11px] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>
+                    <strong>Ergonomie tactile :</strong> Les boutons de validation mesurent au moins 44px de hauteur pour une manipulation aisée même avec des gants d'examen.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Ordinateur (PC / Mac) */}
+            {deviceTab === 'desktop' && (
+              <div className="space-y-4 text-xs">
+                <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-700 space-y-3">
+                  <div className="flex items-center gap-2 text-white font-bold text-sm">
+                    <Monitor className="w-5 h-5 text-teal-400" />
+                    <span>Poste de Consultation & Secrétariat Médical (Windows, Mac, Linux)</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-2 text-slate-300">
+                    <li>
+                      Ouvrir l'application dans <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong> ou <strong>Brave</strong>.
+                    </li>
+                    <li>
+                      Regarder à droite dans la barre d'adresse URL : l'icône <Monitor className="w-3.5 h-3.5 inline text-teal-400" /> <em>« Installer SantéNova »</em> apparaît.
+                    </li>
+                    <li>
+                      Cliquer sur <strong>« Installer »</strong> : le logiciel s'ouvre dans une fenêtre séparée du bureau, avec son raccourci dans le menu Démarrer / Applications.
+                    </li>
+                    <li>
+                      <strong>Impression A4 en 1 clic :</strong> Cliquez sur le bouton d'impression pour générer instantanément l'ordonnance et le carnet de santé officiel en PDF ou sur imprimante thermique.
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Prise en charge multi-écrans & lecteurs de code-barres USB :</span>
+                  <span className="text-teal-400 font-mono font-bold">PLUG & PLAY</span>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: Réseau Local Hospitalier (Sans Internet) */}
+            {deviceTab === 'network' && (
+              <div className="space-y-4 text-xs">
+                <div className="p-4 rounded-xl bg-slate-950/80 border border-amber-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                    <Wifi className="w-5 h-5" />
+                    <span>Diffusion sur le Réseau Wi-Fi Hospitalier (Sans Internet)</span>
+                  </div>
+                  <p className="text-slate-300">
+                    Pour que tous les soignants et patientes accèdent à SantéNova dans l'enceinte de l'hôpital sans utiliser leur forfait de données mobiles :
+                  </p>
+                  <div className="space-y-2 pt-1 font-mono text-[11px]">
+                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center justify-between">
+                      <span>1. Serveur Edge relié au routeur Wi-Fi :</span>
+                      <span className="text-teal-400">IP Fixe : 192.168.1.50</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center justify-between">
+                      <span>2. Nom d'accès DNS local :</span>
+                      <span className="text-teal-400">http://santenova.local:3000</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center justify-between">
+                      <span>3. Coût de données pour les patientes :</span>
+                      <span className="text-emerald-400 font-bold">0 FCFA / 0 Mo Internet</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400 shrink-0">
+                    <QrCode className="w-5 h-5" />
+                  </div>
+                  <div className="text-slate-300 text-[11px]">
+                    <strong>Astuce déploiement :</strong> Imprimez le QR code pointant vers <code>http://santenova.local:3000</code> et collez-le sur la porte des chambres et à l'accueil pour un accès immédiat.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-between border-t border-slate-800 pt-4">
+              <span className="text-[11px] text-slate-500">
+                SantéNova v2.1 · Architecture PWA Standard W3C & FHIR
+              </span>
+              <button
+                onClick={() => setShowDeviceSetupModal(false)}
+                className="px-5 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition-colors shadow-md shadow-teal-500/20"
+              >
+                J'ai compris
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
     </div>
   );
 };
